@@ -4,6 +4,7 @@ import {QuestionModel} from "../model/question/question.model";
 import {QuizModel} from "../model/quiz/quiz.model";
 import {TeamModel} from "../model/team/team.model";
 import {ParameterModel} from "../model/parameter/parameter.model";
+import {GameModel} from "../model/game/game.model";
 
 export const databaseProviders = [
     {
@@ -21,7 +22,7 @@ export const databaseProviders = [
                     },
                 },
             });
-            sequelize.addModels([UserModel, QuizModel, TeamModel, QuestionModel, ParameterModel]);
+            sequelize.addModels([UserModel, QuizModel, TeamModel, QuestionModel, GameModel, ParameterModel]);
             await sequelize.sync();
             return sequelize;
         },

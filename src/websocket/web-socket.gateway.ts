@@ -39,7 +39,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection<WebS
 
         if (!query.token) {
             await this.webSocketService.addAdmin(client);
-            await this.webSocketService.sendToAdmin({event: 'welcome'});
+            await this.webSocketService.sendToAdmin({event: 'dashboard-welcome'});
 
             return;
         }

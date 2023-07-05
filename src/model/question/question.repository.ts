@@ -17,7 +17,7 @@ export class QuestionRepository {
         return this.questionRepository.findAll();
     }
 
-    public findAllByRound(round: number): Promise<Array<QuestionModel>> {
-        return this.questionRepository.findAll({where: {round}, order: ['sequence']});
+    public findByDemo(demo: boolean) {
+        return this.questionRepository.findAll({where: {demo}, order: ['sequence']});
     }
 }

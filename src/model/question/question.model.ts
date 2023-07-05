@@ -1,5 +1,7 @@
 import {AutoIncrement, Column, CreatedAt, Model, PrimaryKey, Table} from "sequelize-typescript";
 import {DataTypes} from "sequelize";
+import {QuestionHint} from "./question-hint.interface";
+import {QuestionAnswer} from "./question-answer.interface";
 
 @Table({
     tableName: 'question',
@@ -13,13 +15,13 @@ export class QuestionModel extends Model {
     @Column
     public sequence: number;
     @Column
-    public round: number;
+    public demo: boolean;
     @Column
     public category: string;
     @Column({type: DataTypes.JSONB})
-    public hint: any;
+    public hint: QuestionHint;
     @Column({type: DataTypes.JSONB})
-    public answer: any;
+    public answer: QuestionAnswer;
     @Column
     public solution: string;
     @CreatedAt

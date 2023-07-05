@@ -6,7 +6,7 @@ import {CurrentUser} from "../common/current-user.decorator";
 import {WebSocketService} from "../websocket/web-socket.service";
 import {UserRepository} from "../model/user/user.repository";
 import {QuizRepository} from "../model/quiz/quiz.repository";
-import {QuizService} from "./quiz.service";
+import {QuizService} from "../quiz/quiz.service";
 
 @Injectable()
 @WebSocketGateway({
@@ -57,8 +57,8 @@ export class GameMessageService {
 
     @SubscribeMessage('quiz-standing')
     public async getStatistic(@MessageBody() data: {round?: number, team?: number}): Promise<WsResponse> {
-        const teamScore = await this.quizRepository.sumScoreByTeam(data.team);
-        const topUsers = await this.quizRepository.sumScoreByTopUser();
+        const teamScore = await this.quizRepository.sumScoreGroupByTeam();
+        const topUsers = await this.quizRepository.sumScoreGroupByUser();
 
         return {
             event: 'quiz-standing',

@@ -6,6 +6,8 @@ import {QuizModel} from "../model/quiz/quiz.model";
 import {UserRepository} from "../model/user/user.repository";
 import * as moment from 'moment-timezone';
 import {QuizRepository} from "../model/quiz/quiz.repository";
+import {GameRepository} from "../model/game/game.repository";
+import {GameModel} from "../model/game/game.model";
 
 @Injectable()
 export class QuizService {
@@ -13,21 +15,28 @@ export class QuizService {
 
     constructor(private questionRepository: QuestionRepository,
                 private userRepository: UserRepository,
+                private gameRepository: GameRepository,
                 private quizRepository: QuizRepository,
                 private webSocketService: WebSocketService) {
     }
 
-    public async start(round: number, startFrom: number = 0) {
-        const gameQuestions = await this.questionRepository.findAllByRound(round);
+    public async send(game: GameModel, questionId: number) {
+        const gameQuestion = await this.questionRepository.findById(questionId);
 
-        this.sendNextQuestion(startFrom, gameQuestions, async (question) => {
+        await this.sendAnswers(gameQuestion);
+
+        const currentQuestionIndex = 0;
+
+        this.sendNextQuestion(currentQuestionIndex, gameQuestion, async (question, index) => {
             await this.webSocketService.sendToAdmin({
                 event: 'quiz-dashboard-message',
-                data: {category: question.category, info: question.hint, timerInSec: 60}
+                data: {category: question.category, info: question.hint.info[index], timerInSec: 60}
             });
-
-            await this.sendAnswers(question);
         });
+
+        game.sentAt = new Date();
+        game.sentQuestionId = questionId;
+        await game.save();
     }
 
     public async evaluate(quiz: QuizModel) {
@@ -46,7 +55,7 @@ export class QuizService {
             quiz.score = 1;
         } else if (units > 20 && units <= 40) {
             quiz.score = 2;
-        } else {
+        } else if (units <= 20){
             quiz.score = 3;
         }
 
@@ -67,28 +76,27 @@ export class QuizService {
                 })
             );
 
-            const userScore = await this.quizRepository.sumScoreByUser(user.id);
-
             this.webSocketService.sendToUser(user.id, {
                 event: 'quiz-user-message',
-                data: {id: question.id, answer: question.answer, currentScore: userScore}
+                data: {
+                    questionId: question.id,
+                    answer: question.answer.options
+                }
             });
         }
 
         await Promise.allSettled(quizModels.map(model => model.save()));
     }
 
-    private sendNextQuestion(currentQuestionIndex, questions, callback: (question: QuestionModel) => void) {
-        if (currentQuestionIndex < questions.length) {
-            const question = questions[currentQuestionIndex];
+    private sendNextQuestion(currentHintIndex, question, callback: (question: QuestionModel, index: number) => void) {
+        if (currentHintIndex < question.hint.info.length) {
+            callback(question, currentHintIndex);
 
-            callback(question);
-
-            currentQuestionIndex++;
+            currentHintIndex++;
 
             setTimeout(() => {
-                this.sendNextQuestion(currentQuestionIndex, questions, callback);
-            }, 60000);
+                this.sendNextQuestion(currentHintIndex, question, callback);
+            }, 20000);
         }
     }
 }
