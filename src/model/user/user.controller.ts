@@ -8,7 +8,7 @@ export class UserController {
 
     @Post('/users')
     public async listAll(@Body() body: any) {
-        const users = await this.userRepository.findAll();
+        const users = await this.userRepository.findAllByAdmin(false);
 
         return users.map(user => ({
             id: user.id,

@@ -6,7 +6,6 @@ import {QuizModel} from "../model/quiz/quiz.model";
 import {UserRepository} from "../model/user/user.repository";
 import * as moment from 'moment-timezone';
 import {QuizRepository} from "../model/quiz/quiz.repository";
-import {ParameterRepository} from "../model/parameter/parameter.repository";
 
 @Injectable()
 export class QuizService {
@@ -15,12 +14,7 @@ export class QuizService {
     constructor(private questionRepository: QuestionRepository,
                 private userRepository: UserRepository,
                 private quizRepository: QuizRepository,
-                private parameterRepository: ParameterRepository,
                 private webSocketService: WebSocketService) {
-    }
-
-    public async listAllParameters() {
-        return this.parameterRepository.findAll();
     }
 
     public async start(round: number, startFrom: number = 0) {

@@ -9,7 +9,7 @@ export class UserService {
     }
 
     public async listAll() {
-        const users = await this.userRepository.findAll();
+        const users = await this.userRepository.findAllByAdmin(false);
 
         if (!users) {
             return [];

@@ -38,7 +38,10 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection<WebS
         const query = url.parse(req.url, true).query;
 
         if (!query.token) {
-            return client.close();
+            await this.webSocketService.addAdmin(client);
+            await this.webSocketService.sendToAdmin({event: 'welcome'});
+
+            return;
         }
 
         let user: UserModel;

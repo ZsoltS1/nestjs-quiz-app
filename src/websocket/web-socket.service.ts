@@ -6,8 +6,26 @@ import {UserRepository} from "../model/user/user.repository";
 @Injectable()
 export class WebSocketService {
     private clients = new Map<number, Set<ws.WebSocket>>();
+    private adminClients = new Map<number, Set<ws.WebSocket>>();
 
     constructor(private userRepository: UserRepository) {
+    }
+
+    public async addAdmin(client: WebSocketClient) {
+        const admin = await this.userRepository.findAdmin();
+
+        if (!admin) {
+            return;
+        }
+
+        if (!this.adminClients.has(admin.id)) {
+            this.adminClients.set(admin.id, new Set());
+        }
+
+        this.adminClients.get(admin.id).add(client);
+
+        admin.registered = true;
+        await admin.save();
     }
 
     public async addClient(userId: number, client: WebSocketClient) {
@@ -45,14 +63,18 @@ export class WebSocketService {
         await user.save();
     }
 
-    public async sendToAdmin(message: { event: string; data?: any }) {
+    public async sendToAdmin(data: { event: string; data?: any }) {
         const admin = await this.userRepository.findAdmin();
 
         if (!admin) {
             return;
         }
 
-        this.sendToUser(admin.id, message);
+        const message = JSON.stringify(data);
+
+        for (const client of this.adminClients.get(admin.id)?.values() ?? []) {
+            client.send(message);
+        }
     }
 
     public sendToUser(userId: number, data: { event: string; data?: any }) {

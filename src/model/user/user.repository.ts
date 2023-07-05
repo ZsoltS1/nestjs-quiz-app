@@ -10,8 +10,8 @@ export class UserRepository {
     ) {
     }
 
-    public findAll(): Promise<Array<UserModel>> {
-        return this.userRepository.findAll();
+    public findAllByAdmin(admin: boolean): Promise<Array<UserModel>> {
+        return this.userRepository.findAll({where: { admin }});
     }
 
     public findById(userId: number): Promise<UserModel> {

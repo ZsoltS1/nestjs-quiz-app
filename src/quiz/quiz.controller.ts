@@ -8,11 +8,6 @@ export class QuizController {
     constructor(private readonly quizService: QuizService) {
     }
 
-    @Get('/parameters')
-    public async getQuestions() {
-        return await this.quizService.listAllParameters();
-    }
-
     @Post('/start')
     @HttpCode(204)
     public async startQuiz(@Query('round') round: number, @Query('startFrom') startFrom: number = 0) {
