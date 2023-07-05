@@ -11,16 +11,11 @@ export class TeamService {
     public async listAll() {
         const teams = await this.teamRepository.findAll();
 
-        if (!teams) {
-            return [];
-        }
-
-        return teams.map(team =>
-            ({
-                id: team.id,
-                name: team.name
-            })
-        );
+        return teams.map(team => ({
+            id: team.id,
+            name: team.name,
+            text: team.text
+        }));
     }
 
 }

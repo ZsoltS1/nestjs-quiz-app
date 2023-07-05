@@ -11,6 +11,8 @@ export class TeamModel extends Model {
     public id: number;
     @Column
     public name: string;
+    @Column
+    public text: string;
     @CreatedAt
     @Column({ field: 'created_at' })
     public createdAt: Date;
