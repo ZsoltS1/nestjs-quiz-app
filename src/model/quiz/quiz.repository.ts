@@ -9,15 +9,15 @@ export class QuizRepository {
     ) {
     }
 
-    public async findAll(): Promise<Array<QuizModel>> {
+    public findAll(): Promise<Array<QuizModel>> {
         return this.quizRepository.findAll();
     }
 
-    public async findByUserIdAndQuestionId(userId: number, questionId: number) {
+    public findByUserIdAndQuestionId(userId: number, questionId: number) {
         return this.quizRepository.findOne({where: {userId, questionId}});
     }
 
-    public async sumScoreByUser(userId: number) {
+    public sumScoreByUser(userId: number) {
         return this.quizRepository.sum('score', {where: {userId}});
     }
 

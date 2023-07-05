@@ -10,7 +10,7 @@ export class QuizController {
 
     @Get('/parameters')
     public async getQuestions() {
-        return await this.quizService.listAll();
+        return await this.quizService.listAllParameters();
     }
 
     @Post('/start')

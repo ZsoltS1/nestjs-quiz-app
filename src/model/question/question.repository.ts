@@ -9,15 +9,15 @@ export class QuestionRepository {
     ) {
     }
 
-    public async findById(questionId: number): Promise<QuestionModel> {
+    public findById(questionId: number): Promise<QuestionModel> {
         return this.questionRepository.findOne({where: {id: questionId}});
     }
 
-    public async findAll(): Promise<Array<QuestionModel>> {
+    public findAll(): Promise<Array<QuestionModel>> {
         return this.questionRepository.findAll();
     }
 
-    public async findAllByRound(round: number): Promise<Array<QuestionModel>> {
+    public findAllByRound(round: number): Promise<Array<QuestionModel>> {
         return this.questionRepository.findAll({where: {round}, order: ['sequence']});
     }
 }

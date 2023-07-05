@@ -6,6 +6,7 @@ import {QuizModel} from "../model/quiz/quiz.model";
 import {UserRepository} from "../model/user/user.repository";
 import * as moment from 'moment-timezone';
 import {QuizRepository} from "../model/quiz/quiz.repository";
+import {ParameterRepository} from "../model/parameter/parameter.repository";
 
 @Injectable()
 export class QuizService {
@@ -14,11 +15,12 @@ export class QuizService {
     constructor(private questionRepository: QuestionRepository,
                 private userRepository: UserRepository,
                 private quizRepository: QuizRepository,
+                private parameterRepository: ParameterRepository,
                 private webSocketService: WebSocketService) {
     }
 
-    public async listAll() {
-        return await this.questionRepository.findAll();
+    public async listAllParameters() {
+        return this.parameterRepository.findAll();
     }
 
     public async start(round: number, startFrom: number = 0) {
@@ -27,7 +29,7 @@ export class QuizService {
         this.sendNextQuestion(startFrom, gameQuestions, async (question) => {
             await this.webSocketService.sendToAdmin({
                 event: 'quiz-dashboard-message',
-                data: {category: question.category, info: question.hint}
+                data: {category: question.category, info: question.hint, timerInSec: 60}
             });
 
             await this.sendAnswers(question);
@@ -60,12 +62,16 @@ export class QuizService {
     private async sendAnswers(question: QuestionModel) {
         const users = await this.userRepository.findAllRegistered();
 
+        const quizModels = [];
+
         for (const user of users) {
-            await new QuizModel({
-                userId: user.id,
-                questionId: question.id,
-                sentAt: new Date()
-            }).save();
+            quizModels.push(
+                await new QuizModel({
+                    userId: user.id,
+                    questionId: question.id,
+                    sentAt: new Date()
+                })
+            );
 
             const userScore = await this.quizRepository.sumScoreByUser(user.id);
 
@@ -74,6 +80,8 @@ export class QuizService {
                 data: {id: question.id, answer: question.answer, currentScore: userScore}
             });
         }
+
+        await Promise.allSettled(quizModels.map(model => model.save()));
     }
 
     private sendNextQuestion(currentQuestionIndex, questions, callback: (question: QuestionModel) => void) {

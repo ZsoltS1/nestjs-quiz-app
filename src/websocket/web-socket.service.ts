@@ -55,9 +55,11 @@ export class WebSocketService {
         this.sendToUser(admin.id, message);
     }
 
-    public sendToUser(userId: number, message: { event: string; data?: any }) {
+    public sendToUser(userId: number, data: { event: string; data?: any }) {
+        const message = JSON.stringify(data);
+
         for (const client of this.clients.get(userId)?.values() ?? []) {
-            client.send(JSON.stringify(message));
+            client.send(message);
         }
     }
 }
