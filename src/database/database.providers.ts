@@ -3,22 +3,25 @@ import {UserModel} from "../model/user/user.model";
 import {QuestionModel} from "../model/question/question.model";
 import {QuizModel} from "../model/quiz/quiz.model";
 import {TeamModel} from "../model/team/team.model";
+import {ParameterModel} from "../model/parameter/parameter.model";
 
 export const databaseProviders = [
     {
         provide: 'SEQUELIZE',
         useFactory: async () => {
+            const config = require(`${process.cwd()}/config/config.json`);
+
             const sequelize = new Sequelize({
-                dialect: 'postgres',
-                host: 'localhost',
-                port: 5432,
-                schema: "public",
-                username: "",
-                password: "",
-                database: "",
-                logging: true
+                ...config.postgres,
+                ...{
+                    synchronize: false,
+                    autoLoadModels: true,
+                    define: {
+                        timestamps: false,
+                    },
+                },
             });
-            sequelize.addModels([UserModel, QuizModel, TeamModel, QuestionModel]);
+            sequelize.addModels([UserModel, QuizModel, TeamModel, QuestionModel, ParameterModel]);
             await sequelize.sync();
             return sequelize;
         },
