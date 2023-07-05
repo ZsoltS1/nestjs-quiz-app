@@ -18,6 +18,7 @@ import {UserController} from "./user/user.controller";
 import {UserService} from "./user/user.service";
 import {TeamController} from "./team/team.controller";
 import {TeamService} from "./team/team.service";
+import {ParameterModule} from "./model/parameter/parameter.module";
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import {TeamService} from "./team/team.service";
         TeamModule,
         QuestionModule,
         QuizModule,
+        ParameterModule,
         WebSocketModule
     ],
     controllers: [LoginController, QuizController, UserController, TeamController, WebSocketController],

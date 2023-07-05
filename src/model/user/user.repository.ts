@@ -10,23 +10,23 @@ export class UserRepository {
     ) {
     }
 
-    public async findAll(): Promise<Array<UserModel>> {
+    public findAll(): Promise<Array<UserModel>> {
         return this.userRepository.findAll();
     }
 
-    public async findById(userId: number): Promise<UserModel> {
+    public findById(userId: number): Promise<UserModel> {
         return this.userRepository.findOne({where: {id: userId}});
     }
 
-    public async findByName(name: string): Promise<UserModel> {
+    public findByName(name: string): Promise<UserModel> {
         return this.userRepository.findOne({where: {fullname: name}});
     }
 
-    public async findAllRegistered() {
+    public findAllRegistered() {
         return this.userRepository.findAll({where: {registered: true}});
     }
 
-    public async findAdmin() {
+    public findAdmin() {
         return this.userRepository.findOne({where: {admin: true}});
     }
 }
