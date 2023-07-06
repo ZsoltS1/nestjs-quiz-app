@@ -64,10 +64,10 @@ export class GameService {
             game.startedAt = new Date();
         }
 
-        const units = moment(game.sentAt).diff(moment(), 'seconds');
+        const units = moment().diff(moment(game.sentAt), 'seconds');
 
         if (units < 60) {
-            return;
+            return game;
         }
 
         const nextQuestionId = this.findNextQuestion(game);
