@@ -5,7 +5,14 @@ import {WsAdapter} from "@nestjs/platform-ws";
 async function bootstrap() {
     const config = require(`${process.cwd()}/config/config.json`);
 
-    const app = await NestFactory.create(AppModule);
+    const httpsOptions = {
+        key: config.secretPrivatePath,
+        cert: config.certificatePath,
+    };
+
+    const app = await NestFactory.create(AppModule, {
+        httpsOptions,
+    });
 
     app.useWebSocketAdapter(new WsAdapter(app));
     app.enableCors({

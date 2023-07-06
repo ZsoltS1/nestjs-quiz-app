@@ -1,6 +1,8 @@
 {
   "port": 8080,
   "defaultAwsRegion": "",
+  "secretPrivatePath": "",
+  "certificatePath": "",
   "postgres": {
     "host": "",
     "username": "",
