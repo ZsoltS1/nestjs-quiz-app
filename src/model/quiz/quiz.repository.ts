@@ -31,7 +31,7 @@ export class QuizRepository {
             from team t
                      left join "user" u on t.id = u.team_id
                      left join quiz q on q.user_id = u.id
-                     join question qs on qs.id = q.question_id and qs.demo = false
+                     left join question qs on qs.id = q.question_id and qs.demo = false
             group by t.id, t.text, t.name
             order by coalesce(sum(score), 0) desc
         `);

@@ -8,6 +8,7 @@ import {GameMessageService} from "./game-message.service";
 import {QuizRepository} from "../model/quiz/quiz.repository";
 import {QuestionRepository} from "../model/question/question.repository";
 import {UserRepository} from "../model/user/user.repository";
+import * as moment from "moment-timezone";
 
 @Injectable()
 export class GameService {
@@ -61,6 +62,12 @@ export class GameService {
 
         if (!game.startedAt) {
             game.startedAt = new Date();
+        }
+
+        const units = moment(game.sentAt).diff(moment(), 'seconds');
+
+        if (units < 60) {
+            return;
         }
 
         const nextQuestionId = this.findNextQuestion(game);
