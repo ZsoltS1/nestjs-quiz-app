@@ -23,12 +23,17 @@ export class QuizRepository {
 
     public async sumScoreGroupByTeam() {
         const result = await this.quizRepository.sequelize.query(`
-            select t.id as id, t.text as text, coalesce(sum(score), 0) as score
+            select t.id as id, t.text as text, t.name,
+                   COUNT(CASE WHEN score = 3 THEN 1 END) AS count_3_point,
+                   COUNT(CASE WHEN score = 2 THEN 1 END) AS count_2_point,
+                   COUNT(CASE WHEN score = 1 THEN 1 END) AS count_1_point,
+                   coalesce(sum(score), 0) as total
             from team t
                      left join "user" u on t.id = u.team_id
                      left join quiz q on q.user_id = u.id
                      join question qs on qs.id = q.question_id and qs.demo = false
-            group by t.id, t.text
+            group by t.id, t.text, t.name
+            order by coalesce(sum(score), 0) desc
         `);
 
         return result?.[0];
