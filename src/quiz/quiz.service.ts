@@ -27,17 +27,19 @@ export class QuizService {
 
         await this.webSocketService.sendToAdmin({
             event: 'quiz-dashboard-message',
-            data: {category: gameQuestion.category, timerInSec: 60}
+            data: {category: gameQuestion.category, info: gameQuestion.hint.info[0], timerInSec: 60}
         });
 
-        const currentQuestionIndex = 0;
+        const currentQuestionIndex = 1;
 
-        this.sendNextQuestion(currentQuestionIndex, gameQuestion, async (question, index) => {
-            await this.webSocketService.sendToAdmin({
-                event: 'quiz-dashboard-hint',
-                data: {info: question.hint.info[index]}
+        setTimeout(() => {
+            this.sendNextQuestion(currentQuestionIndex, gameQuestion, async (question, index) => {
+                await this.webSocketService.sendToAdmin({
+                    event: 'quiz-dashboard-hint',
+                    data: {info: question.hint.info[index]}
+                });
             });
-        });
+        }, 20000);
 
         game.sentAt = new Date();
         game.sentQuestionId = questionId;
