@@ -1,13 +1,14 @@
 import {NestFactory} from '@nestjs/core';
 import {AppModule} from './app.module';
 import {WsAdapter} from "@nestjs/platform-ws";
+import * as fs from "fs";
 
 async function bootstrap() {
     const config = require(`${process.cwd()}/config/config.json`);
 
     const httpsOptions = {
-        key: config.secretPrivatePath,
-        cert: config.certificatePath,
+        key: fs.readFileSync(config.secretPrivatePath),
+        cert: fs.readFileSync(config.certificatePath),
     };
 
     const app = await NestFactory.create(AppModule, {

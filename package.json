@@ -34,6 +34,7 @@
     "@types/sequelize": "^4.28.15",
     "@types/ws": "^8.5.5",
     "crypto-js": "^4.1.1",
+    "fs": "^0.0.1-security",
     "passport-jwt": "^4.0.1",
     "pg": "^8.11.1",
     "reflect-metadata": "^0.1.13",
