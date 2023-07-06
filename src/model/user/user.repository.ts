@@ -22,8 +22,8 @@ export class UserRepository {
         return this.userRepository.findOne({where: {fullname: name}});
     }
 
-    public findAllRegistered() {
-        return this.userRepository.findAll({where: {registered: true}});
+    public findAllRegistered(admin: boolean) {
+        return this.userRepository.findAll({where: {registered: true, admin: false}});
     }
 
     public findAdmin() {

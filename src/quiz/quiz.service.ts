@@ -25,12 +25,17 @@ export class QuizService {
 
         await this.sendAnswers(gameQuestion);
 
+        await this.webSocketService.sendToAdmin({
+            event: 'quiz-dashboard-message',
+            data: {category: gameQuestion.category, timerInSec: 60}
+        });
+
         const currentQuestionIndex = 0;
 
         this.sendNextQuestion(currentQuestionIndex, gameQuestion, async (question, index) => {
             await this.webSocketService.sendToAdmin({
-                event: 'quiz-dashboard-message',
-                data: {category: question.category, info: question.hint.info[index], timerInSec: 60}
+                event: 'quiz-dashboard-hint',
+                data: {info: question.hint.info[index]}
             });
         });
 
@@ -63,7 +68,7 @@ export class QuizService {
     }
 
     private async sendAnswers(question: QuestionModel) {
-        const users = await this.userRepository.findAllRegistered();
+        const users = await this.userRepository.findAllRegistered(false);
 
         const quizModels = [];
 
@@ -81,6 +86,15 @@ export class QuizService {
                 data: {
                     questionId: question.id,
                     answer: question.answer.options
+                }
+            });
+
+            const userScore = await this.quizRepository.sumScoreByUser(user.id);
+
+            this.webSocketService.sendToUser(user.id, {
+                event: 'quiz-user-score',
+                data: {
+                    score: userScore
                 }
             });
         }

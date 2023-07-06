@@ -6,26 +6,15 @@ import {UserRepository} from "../model/user/user.repository";
 @Injectable()
 export class WebSocketService {
     private clients = new Map<number, Set<ws.WebSocket>>();
-    private adminClients = new Map<number, Set<ws.WebSocket>>();
+    private adminClients = new Set<ws.WebSocket>();
 
     constructor(private userRepository: UserRepository) {
     }
 
     public async addAdmin(client: WebSocketClient) {
-        const admin = await this.userRepository.findAdmin();
-
-        if (!admin) {
-            return;
+        if (!this.adminClients.has(client)) {
+            this.adminClients.add(client);
         }
-
-        if (!this.adminClients.has(admin.id)) {
-            this.adminClients.set(admin.id, new Set());
-        }
-
-        this.adminClients.get(admin.id).add(client);
-
-        admin.registered = true;
-        await admin.save();
     }
 
     public async addClient(userId: number, client: WebSocketClient) {
@@ -43,6 +32,16 @@ export class WebSocketService {
 
         user.registered = true;
         await user.save();
+    }
+
+    public async removeAdminClient(adminClient: WebSocketClient) {
+        const clients = this.adminClients.values();
+
+        for (const client of clients) {
+            if (client === adminClient) {
+                this.adminClients.delete(adminClient);
+            }
+        }
     }
 
     public async removeClient(userId: number, client: WebSocketClient) {
@@ -72,8 +71,16 @@ export class WebSocketService {
 
         const message = JSON.stringify(data);
 
-        for (const client of this.adminClients.get(admin.id)?.values() ?? []) {
+        for (const client of this.adminClients.values() ?? []) {
             client.send(message);
+        }
+    }
+
+    public sendToAllUser(data: { event: string; data?: any }) {
+        const message = JSON.stringify(data);
+
+        for (const user of this.clients.keys() ?? []) {
+            this.clients[user].send(message);
         }
     }
 

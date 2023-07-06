@@ -78,6 +78,8 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection<WebS
     public async handleDisconnect(client: WebSocketClient) {
         if (client.user) {
             await this.webSocketService.removeClient(client.user.model.id, client);
+        } else {
+            await this.webSocketService.removeAdminClient(client);
         }
     }
 }

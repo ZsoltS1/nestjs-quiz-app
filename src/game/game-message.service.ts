@@ -31,13 +31,19 @@ export class GameMessageService {
         const user = await this.userRepository.findById(currentUser.id);
 
         if (!user) {
-            return {event: 'quiz-user-score', data: {error: 'not-found'}}
+            return {
+                event: 'quiz-user-score',
+                data: {error: 'not-found'}
+            };
         }
 
         const quiz = await this.quizRepository.findByUserIdAndQuestionId(user.id, data.questionId);
 
         if (!quiz) {
-            return {event: 'quiz-user-score', data: {error: 'not-found'}}
+            return {
+                event: 'quiz-user-score',
+                data: {error: 'not-found'}
+            };
         }
 
         quiz.answer = data.answer;
@@ -51,20 +57,6 @@ export class GameMessageService {
             event: 'quiz-user-score',
             data: {
                 score: userScore
-            },
-        };
-    }
-
-    @SubscribeMessage('quiz-standing')
-    public async getStatistic(@MessageBody() data: {round?: number, team?: number}): Promise<WsResponse> {
-        const teamScore = await this.quizRepository.sumScoreGroupByTeam();
-        const topUsers = await this.quizRepository.sumScoreGroupByUser();
-
-        return {
-            event: 'quiz-standing',
-            data: {
-                teamScore,
-                topUsers
             },
         };
     }

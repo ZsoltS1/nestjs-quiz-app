@@ -7,6 +7,7 @@ import {QuizService} from "../quiz/quiz.service";
 import {GameMessageService} from "./game-message.service";
 import {QuizRepository} from "../model/quiz/quiz.repository";
 import {QuestionRepository} from "../model/question/question.repository";
+import {UserRepository} from "../model/user/user.repository";
 
 @Injectable()
 export class GameService {
@@ -16,6 +17,7 @@ export class GameService {
                 private quizService: QuizService,
                 private gameMessageService: GameMessageService,
                 private quizRepository: QuizRepository,
+                private userRepository: UserRepository,
                 private questionRepository: QuestionRepository,
                 private webSocketService: WebSocketService) {
     }
@@ -77,17 +79,39 @@ export class GameService {
         return await game.save();
     }
 
+    public async getStanding(game: GameModel) {
+        await this.sendStoppedMessage(game);
+    }
+
     private async sendStoppedMessage(game: GameModel) {
         const teamScore = await this.quizRepository.sumScoreGroupByTeam();
         const topUsers = await this.quizRepository.sumScoreGroupByUser();
 
         await this.webSocketService.sendToAdmin({
-            event: 'quiz-stopped',
+            event: 'quiz-dashboard-paused',
             data: {
                 teamScore,
                 topUsers
             },
         });
+
+        const users = await this.userRepository.findAllRegistered(false);
+
+        for (const user of users) {
+            const userScore = await this.quizRepository.sumScoreByUser(user.id);
+            const userRanking = await this.quizRepository.rankingGroupByUser();
+
+            const ranking = userRanking.find(ranking => ranking['userid'] === user.id)
+
+            await this.webSocketService.sendToUser(user.id, {
+                event: 'quiz-user-paused',
+                data: {
+                    standing: ranking['rank'] ?? '',
+                    score: userScore
+                },
+            });
+        }
+
     }
 
     private findNextQuestion(game: GameModel): number | undefined {

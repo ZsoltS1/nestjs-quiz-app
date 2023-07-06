@@ -48,6 +48,14 @@ export class GameController {
         return this.map(newGame);
     }
 
+    @Patch('/:id/standing')
+    @HttpCode(204)
+    public async getStanding(@Param('id') gameId: number) {
+        const game = await this.gameService.next(gameId);
+
+        await this.gameService.getStanding(game);
+    }
+
     @Patch('/:id/next')
     public async nextQuestion(@Param('id') gameId: number) {
         const game = await this.gameService.next(gameId);
