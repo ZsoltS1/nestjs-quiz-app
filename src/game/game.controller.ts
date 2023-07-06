@@ -51,7 +51,11 @@ export class GameController {
     @Patch('/:id/standing')
     @HttpCode(204)
     public async getStanding(@Param('id') gameId: number) {
-        const game = await this.gameService.next(gameId);
+        const game = await this.gameRepository.findById(gameId);
+
+        if (!game) {
+          throw new NotFoundException();
+        }
 
         await this.gameService.getStanding(game);
     }
@@ -83,6 +87,7 @@ export class GameController {
             id: game.id,
             demo: game.demo,
             scoreType: game.scoreType,
+            sentAt: game.sentAt,
             sentQuestion: game.sentQuestionId,
             startedAt: game.startedAt,
             stoppedAt: game.stoppedAt
