@@ -63,24 +63,10 @@ export class WebSocketService {
     }
 
     public async sendToAdmin(data: { event: string; data?: any }) {
-        const admin = await this.userRepository.findAdmin();
-
-        if (!admin) {
-            return;
-        }
-
         const message = JSON.stringify(data);
 
         for (const client of this.adminClients.values() ?? []) {
             client.send(message);
-        }
-    }
-
-    public sendToAllUser(data: { event: string; data?: any }) {
-        const message = JSON.stringify(data);
-
-        for (const user of this.clients.keys() ?? []) {
-            this.clients[user].send(message);
         }
     }
 
