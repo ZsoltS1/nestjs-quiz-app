@@ -15,11 +15,17 @@ export class ParameterRepository {
         return this.parameterRepository.findAll();
     }
 
-    public findValueByType(name: ParameterType | string) {
+    public findByType(name: ParameterType | string) {
         return this.parameterRepository.findOne({
             where: {
                 name
             },
-        });
+        })
+    }
+
+    public async findValueByType(name: ParameterType | string) {
+        const parameter = await this.findByType(name);
+
+        return parameter.value;
     }
 }

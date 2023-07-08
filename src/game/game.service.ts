@@ -91,8 +91,8 @@ export class GameService {
     }
 
     private async sendStoppedMessage(game: GameModel) {
-        const teamScore = await this.quizRepository.sumScoreGroupByTeam();
-        const topUsers = await this.quizRepository.sumScoreGroupByUser();
+        const teamScore = await this.quizRepository.sumScoreGroupByTeam(game.id);
+        const topUsers = await this.quizRepository.sumScoreGroupByUser(game.id);
 
         await this.webSocketService.sendToAdmin({
             event: 'quiz-dashboard-paused',
@@ -105,15 +105,15 @@ export class GameService {
         const users = await this.userRepository.findAllRegistered(false);
 
         for (const user of users) {
-            const userScore = await this.quizRepository.sumScoreByUser(user.id);
-            const userRanking = await this.quizRepository.rankingGroupByUser();
+            const userScore = await this.quizRepository.sumScoreByUserAndGame(user.id, game.id);
+            const userRanking = await this.quizRepository.rankingGroupByUser(game.id);
 
             const ranking = userRanking.find(ranking => ranking['userid'] === user.id)
 
             await this.webSocketService.sendToUser(user.id, {
                 event: 'quiz-user-paused',
                 data: {
-                    standing: ranking['rank'] ?? '',
+                    standing: ranking ? ranking['rank'] : null,
                     score: userScore
                 },
             });

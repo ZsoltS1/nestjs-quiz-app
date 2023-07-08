@@ -11,6 +11,7 @@ import {
 } from "sequelize-typescript";
 import {UserModel} from "../user/user.model";
 import {QuestionModel} from "../question/question.model";
+import {GameModel} from "../game/game.model";
 
 @Table({
     tableName: 'quiz'
@@ -21,12 +22,17 @@ export class QuizModel extends Model {
     @Column
     public id: number;
     @ForeignKey(() => UserModel)
-    @Column({ field: 'user_id' })
+    @Column({field: 'user_id'})
     public userId: number;
     @BelongsTo(() => UserModel, 'user_id')
     public user: Promise<UserModel>;
+    @ForeignKey(() => GameModel)
+    @Column({field: 'game_id'})
+    public gameId: number;
+    @BelongsTo(() => GameModel, 'game_id')
+    public game: Promise<GameModel>;
     @ForeignKey(() => QuestionModel)
-    @Column({ field: 'question_id' })
+    @Column({field: 'question_id'})
     public questionId: number;
     @BelongsTo(() => QuestionModel, 'question_id')
     public question: Promise<QuestionModel>;
@@ -39,9 +45,9 @@ export class QuizModel extends Model {
     @Column
     public score: number;
     @CreatedAt
-    @Column({ field: 'created_at' })
+    @Column({field: 'created_at'})
     public createdAt: Date;
     @UpdatedAt
-    @Column({ field: 'updated_at' })
+    @Column({field: 'updated_at'})
     public updatedAt: Date;
 }

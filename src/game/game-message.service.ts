@@ -7,6 +7,7 @@ import {WebSocketService} from "../websocket/web-socket.service";
 import {UserRepository} from "../model/user/user.repository";
 import {QuizRepository} from "../model/quiz/quiz.repository";
 import {QuizService} from "../quiz/quiz.service";
+import {GameRepository} from "../model/game/game.repository";
 
 @Injectable()
 @WebSocketGateway({
@@ -21,29 +22,32 @@ export class GameMessageService {
     constructor(private webSocketService: WebSocketService,
                 private userRepository: UserRepository,
                 private quizRepository: QuizRepository,
+                private gameRepository: GameRepository,
                 private quizService: QuizService) {
     }
 
     @SubscribeMessage('quiz-user-response')
     public async receiveMessage(
         @CurrentUser() currentUser: UserModel,
-        @MessageBody() data: { questionId: number, answer: string }): Promise<WsResponse> {
+        @MessageBody() data: { gameId: number, questionId: number, answer: string }): Promise<WsResponse> {
+        this.logger.debug(`receive answer from user: `, [data]);
+
         const user = await this.userRepository.findById(currentUser.id);
 
         if (!user) {
-            return {
-                event: 'quiz-user-score',
-                data: {error: 'not-found'}
-            };
+            return;
         }
 
-        const quiz = await this.quizRepository.findByUserIdAndQuestionId(user.id, data.questionId);
+        const game = await this.gameRepository.findById(data.gameId);
 
-        if (!quiz) {
-            return {
-                event: 'quiz-user-score',
-                data: {error: 'not-found'}
-            };
+        if (!game || game.stoppedAt) {
+            return;
+        }
+
+        const quiz = await this.quizRepository.findByUserAndQuestionAndGame(user.id, data.questionId, data.gameId);
+
+        if (!quiz || quiz.answeredAt) {
+            return;
         }
 
         quiz.answer = data.answer;
@@ -51,13 +55,5 @@ export class GameMessageService {
         await quiz.save();
 
         await this.quizService.evaluate(quiz);
-        const userScore = await this.quizRepository.sumScoreByUser(user.id);
-
-        return {
-            event: 'quiz-user-score',
-            data: {
-                score: userScore
-            },
-        };
     }
 }

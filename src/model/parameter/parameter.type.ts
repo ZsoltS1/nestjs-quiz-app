@@ -1,3 +1,4 @@
 export enum ParameterType {
-
+    QUESTION_TIMER_IN_SEC = "QUESTION_TIMER_IN_SEC",
+    QUESTION_HINT_TIMER = "QUESTION_HINT_TIMER",
 }

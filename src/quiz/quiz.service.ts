@@ -8,6 +8,9 @@ import * as moment from 'moment-timezone';
 import {QuizRepository} from "../model/quiz/quiz.repository";
 import {GameRepository} from "../model/game/game.repository";
 import {GameModel} from "../model/game/game.model";
+import {GameScoreType} from "../model/game/game-score.type";
+import {ParameterType} from "../model/parameter/parameter.type";
+import {ParameterRepository} from "../model/parameter/parameter.repository";
 
 @Injectable()
 export class QuizService {
@@ -17,29 +20,34 @@ export class QuizService {
                 private userRepository: UserRepository,
                 private gameRepository: GameRepository,
                 private quizRepository: QuizRepository,
+                private parameterRepository: ParameterRepository,
                 private webSocketService: WebSocketService) {
     }
 
     public async send(game: GameModel, questionId: number) {
+        const questionTimerInSec = await this.parameterRepository.findValueByType(ParameterType.QUESTION_TIMER_IN_SEC);
+        const hintTimerConfig = await this.parameterRepository.findValueByType(ParameterType.QUESTION_HINT_TIMER);
         const gameQuestion = await this.questionRepository.findById(questionId);
 
-        await this.sendAnswers(gameQuestion);
+        const hintTimer = hintTimerConfig.split(';').map(item => +item);
 
         await this.webSocketService.sendToAdmin({
             event: 'quiz-dashboard-message',
-            data: {category: gameQuestion.category, info: gameQuestion.hint.info[0], timerInSec: 60}
+            data: {category: gameQuestion.category, info: gameQuestion.hint.info[0], timerInSec: questionTimerInSec}
         });
+
+        await this.sendAnswers(gameQuestion, game);
 
         const currentQuestionIndex = 1;
 
         setTimeout(() => {
-            this.sendNextQuestion(currentQuestionIndex, gameQuestion, async (question, index) => {
+            this.sendNextQuestion(currentQuestionIndex, gameQuestion, hintTimer, async (question, index) => {
                 await this.webSocketService.sendToAdmin({
                     event: 'quiz-dashboard-hint',
                     data: {info: question.hint.info[index]}
                 });
             });
-        }, 20000);
+        }, hintTimer[0]);
 
         game.sentAt = new Date();
         game.sentQuestionId = questionId;
@@ -47,6 +55,7 @@ export class QuizService {
     }
 
     public async evaluate(quiz: QuizModel) {
+        const hintTimerConfig = await this.parameterRepository.findValueByType(ParameterType.QUESTION_HINT_TIMER);
         const question = await this.questionRepository.findById(quiz.questionId);
 
         if (question.solution !== quiz.answer) {
@@ -56,20 +65,28 @@ export class QuizService {
             return;
         }
 
-        const units = moment(quiz.sentAt).diff(moment(quiz.answeredAt, 'seconds'));
+        const hintTimer = hintTimerConfig.split(';').map(item => +item);
+        const units = moment(quiz.answeredAt).diff(moment(quiz.sentAt, 'milliseconds'));
 
-        if (units > 40) {
-            quiz.score = 1;
-        } else if (units > 20 && units <= 40) {
-            quiz.score = 2;
-        } else if (units <= 20){
-            quiz.score = 3;
-        }
-
+        quiz.score = this.calculateScore(hintTimer, units);
         await quiz.save();
     }
 
-    private async sendAnswers(question: QuestionModel) {
+    private calculateScore(hintTimer: number[], units: number) {
+        let hintLimit = 0;
+
+        for (let i = 0; i < hintTimer.length; i++) {
+            hintLimit += hintTimer[i];
+
+            if (units <= hintLimit) {
+                return (3-i);
+            }
+        }
+
+        return 0;
+    }
+
+    private async sendAnswers(question: QuestionModel, game: GameModel) {
         const users = await this.userRepository.findAllRegistered(false);
 
         const quizModels = [];
@@ -79,23 +96,23 @@ export class QuizService {
                 await new QuizModel({
                     userId: user.id,
                     questionId: question.id,
+                    gameId: game.id,
                     sentAt: new Date()
                 })
             );
 
+            let userScore = 0;
+
+            if (game.scoreType == GameScoreType.continuous) {
+                userScore = await this.quizRepository.sumScoreByUserAndGame(user.id, game.id);
+            }
+
             this.webSocketService.sendToUser(user.id, {
                 event: 'quiz-user-message',
                 data: {
+                    gameId: game.id,
                     questionId: question.id,
-                    answer: question.answer.options
-                }
-            });
-
-            const userScore = await this.quizRepository.sumScoreByUser(user.id);
-
-            this.webSocketService.sendToUser(user.id, {
-                event: 'quiz-user-score',
-                data: {
+                    answer: question.answer.options,
                     score: userScore
                 }
             });
@@ -104,15 +121,15 @@ export class QuizService {
         await Promise.allSettled(quizModels.map(model => model.save()));
     }
 
-    private sendNextQuestion(currentHintIndex, question, callback: (question: QuestionModel, index: number) => void) {
+    private sendNextQuestion(currentHintIndex, question, hintTimer, callback: (question: QuestionModel, index: number) => void) {
         if (currentHintIndex < question.hint.info.length) {
             callback(question, currentHintIndex);
 
             currentHintIndex++;
 
             setTimeout(() => {
-                this.sendNextQuestion(currentHintIndex, question, callback);
-            }, 20000);
+                this.sendNextQuestion(currentHintIndex, question, hintTimer, callback);
+            }, hintTimer[currentHintIndex]);
         }
     }
 }
