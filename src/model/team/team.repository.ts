@@ -10,7 +10,7 @@ export class TeamRepository {
     }
 
     public findAll(): Promise<Array<TeamModel>> {
-        return this.teamRepository.findAll();
+        return this.teamRepository.findAll({order: ['id']});
     }
 
     public findById(teamId: number): Promise<TeamModel> {
