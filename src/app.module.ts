@@ -21,6 +21,7 @@ import {ParameterModule} from "./model/parameter/parameter.module";
 import {GameController} from "./game/game.controller";
 import {GameService} from "./game/game.service";
 import {GameModule} from "./model/game/game.module";
+import {QuestionController} from "./question/question.controller";
 
 @Module({
     imports: [
@@ -38,7 +39,7 @@ import {GameModule} from "./model/game/game.module";
         ParameterModule,
         WebSocketModule
     ],
-    controllers: [LoginController, GameController, UserController, TeamController, WebSocketController],
+    controllers: [LoginController, GameController, UserController, TeamController, QuestionController, WebSocketController],
     providers: [JwtStrategy, LoginService, GameService, QuizService, UserService, TeamService, GameMessageService],
 })
 export class AppModule {

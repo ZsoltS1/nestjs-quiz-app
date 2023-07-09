@@ -101,11 +101,7 @@ export class QuizService {
                 })
             );
 
-            let userScore = 0;
-
-            if (game.scoreType == GameScoreType.continuous) {
-                userScore = await this.quizRepository.sumScoreByUserAndGame(user.id, game.id);
-            }
+            const userScore = await this.quizRepository.sumScoreByUserAndGame(user.id, game.id);
 
             this.webSocketService.sendToUser(user.id, {
                 event: 'quiz-user-message',
