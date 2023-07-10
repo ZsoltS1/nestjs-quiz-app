@@ -8,9 +8,9 @@ import * as moment from 'moment-timezone';
 import {QuizRepository} from "../model/quiz/quiz.repository";
 import {GameRepository} from "../model/game/game.repository";
 import {GameModel} from "../model/game/game.model";
-import {GameScoreType} from "../model/game/game-score.type";
 import {ParameterType} from "../model/parameter/parameter.type";
 import {ParameterRepository} from "../model/parameter/parameter.repository";
+import {GameMessageModel} from "../model/game/game-message.model";
 
 @Injectable()
 export class QuizService {
@@ -31,15 +31,39 @@ export class QuizService {
 
         const hintTimer = hintTimerConfig.split(';').map(item => +item);
 
-        await this.webSocketService.sendToAdmin({
-            event: 'quiz-dashboard-message',
-            data: {category: gameQuestion.category, info: gameQuestion.hint.info[0], timerInSec: questionTimerInSec}
-        });
+        game.sentAt = new Date();
+        game.sentQuestionId = questionId;
+        await game.save();
+
+        // send all options to gamer
+        await new GameMessageModel({
+            gameId: game.id,
+            eventType: 'quiz-user-message',
+            eventData: {
+                gameId: game.id,
+                questionId: gameQuestion.id,
+                answer: gameQuestion.answer.options,
+            }
+        }).save();
 
         await this.sendAnswers(gameQuestion, game);
 
-        const currentQuestionIndex = 1;
+        const timerEndedAt = moment(game.sentAt).add(questionTimerInSec, 'seconds');
 
+        // send first hint to projector
+        await this.webSocketService.sendToAdmin({
+            event: 'quiz-dashboard-message',
+            data: {
+                category: gameQuestion.category,
+                info: gameQuestion.hint.info[0],
+                solution: gameQuestion.solution,
+                timerInSec: questionTimerInSec,
+                timerEndedAt
+            }
+        });
+
+        // send other hints to projector
+        const currentQuestionIndex = 1;
         setTimeout(() => {
             this.sendNextQuestion(currentQuestionIndex, gameQuestion, hintTimer, async (question, index) => {
                 await this.webSocketService.sendToAdmin({
