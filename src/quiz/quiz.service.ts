@@ -68,7 +68,12 @@ export class QuizService {
         const hintTimer = hintTimerConfig.split(';').map(item => +item);
         const units = moment(quiz.answeredAt).diff(moment(quiz.sentAt, 'milliseconds'));
 
-        quiz.score = this.calculateScore(hintTimer, units);
+        const deadline = hintTimer.reduce((accumulator, currentValue) => accumulator + currentValue, 0);
+
+        if (units < deadline) {
+            quiz.score = this.calculateScore(hintTimer, units);
+        }
+
         await quiz.save();
     }
 
@@ -79,7 +84,7 @@ export class QuizService {
             hintLimit += hintTimer[i];
 
             if (units <= hintLimit) {
-                return (3-i);
+                return (3 - i);
             }
         }
 
@@ -87,7 +92,7 @@ export class QuizService {
     }
 
     private async sendAnswers(question: QuestionModel, game: GameModel) {
-        const users = await this.userRepository.findAllRegistered(false);
+        const users = await this.userRepository.findAllConnected(false);
 
         const quizModels = [];
 

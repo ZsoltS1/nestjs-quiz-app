@@ -42,6 +42,8 @@ export class GameService {
 
         const questions = await this.questionRepository.findByDemo(demo);
 
+        this.webSocketService.clearUserMessages();
+
         return new GameModel({
             demo,
             scoreType,
@@ -102,7 +104,7 @@ export class GameService {
             },
         });
 
-        const users = await this.userRepository.findAllRegistered(false);
+        const users = await this.userRepository.findAllConnected(false);
 
         for (const user of users) {
             const userScore = await this.quizRepository.sumScoreByUserAndGame(user.id, game.id);

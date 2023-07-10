@@ -2,11 +2,13 @@ import {Injectable} from '@nestjs/common';
 import {WebSocketClient} from './web-socket-client.interface';
 import * as ws from 'ws';
 import {UserRepository} from "../model/user/user.repository";
+import {UserModel} from "../model/user/user.model";
 
 @Injectable()
 export class WebSocketService {
     private clients = new Map<number, Set<ws.WebSocket>>();
     private adminClients = new Set<ws.WebSocket>();
+    private userMessages = new Map<number, { event: string; data?: any }>();
 
     constructor(private userRepository: UserRepository) {
     }
@@ -30,8 +32,10 @@ export class WebSocketService {
 
         this.clients.get(userId).add(client);
 
-        user.registered = true;
+        user.connected = true;
         await user.save();
+
+        this.sendLastMessages(user);
     }
 
     public async removeAdminClient(adminClient: WebSocketClient) {
@@ -58,7 +62,7 @@ export class WebSocketService {
             this.clients.delete(userId);
         }
 
-        user.registered = false;
+        user.connected = false;
         await user.save();
     }
 
@@ -75,6 +79,19 @@ export class WebSocketService {
 
         for (const client of this.clients.get(userId)?.values() ?? []) {
             client.send(message);
+            this.userMessages.set(userId, data);
         }
+    }
+
+    private sendLastMessages(user: UserModel) {
+        const lastMessage = this.userMessages.get(user.id);
+
+        if (lastMessage) {
+            this.sendToUser(user.id, lastMessage);
+        }
+    }
+
+    public clearUserMessages() {
+        this.userMessages.clear();
     }
 }
