@@ -1,4 +1,4 @@
-import {BadRequestException, Injectable, NotFoundException} from "@nestjs/common";
+import {BadRequestException, ForbiddenException, Injectable, NotFoundException} from "@nestjs/common";
 import {UserRepository} from "../model/user/user.repository";
 import {UserModel} from "../model/user/user.model";
 import {JwtService} from "@nestjs/jwt";
@@ -24,7 +24,7 @@ export class LoginService {
         }
 
         if (user.loggedIn) {
-            throw new BadRequestException('UserAlreadyLoggedIn');
+            throw new ForbiddenException('UserAlreadyLoggedIn');
         }
 
         user.teamId = team.id;
@@ -32,6 +32,18 @@ export class LoginService {
         await user.save();
 
         return user;
+    }
+
+    public async signOut(userId: number) {
+        const user = await this.userRepository.findById(userId);
+
+        if (!user) {
+            throw new NotFoundException();
+        }
+
+        user.loggedIn = false;
+        user.connected = false;
+        await user.save();
     }
 
     public generateToken(user: UserModel) {
