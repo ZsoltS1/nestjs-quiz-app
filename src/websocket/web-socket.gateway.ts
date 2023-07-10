@@ -1,10 +1,9 @@
 import {
-    MessageBody,
     OnGatewayConnection,
     OnGatewayDisconnect,
-    OnGatewayInit, SubscribeMessage,
+    OnGatewayInit,
     WebSocketGateway as WsGateway,
-    WebSocketServer, WsResponse,
+    WebSocketServer,
 } from '@nestjs/websockets';
 import {AES, enc} from 'crypto-js';
 import {IncomingMessage} from 'http';
@@ -73,6 +72,7 @@ export class WebSocketGateway implements OnGatewayInit, OnGatewayConnection<WebS
 
         await this.webSocketService.addClient(user.id, client);
         this.webSocketService.sendToUser(user.id, {event: 'welcome'});
+        await this.webSocketService.sendLastMessage(user);
     }
 
     public async handleDisconnect(client: WebSocketClient) {

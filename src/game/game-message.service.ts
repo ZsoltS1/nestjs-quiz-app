@@ -6,8 +6,8 @@ import {CurrentUser} from "../common/current-user.decorator";
 import {WebSocketService} from "../websocket/web-socket.service";
 import {UserRepository} from "../model/user/user.repository";
 import {QuizRepository} from "../model/quiz/quiz.repository";
-import {QuizService} from "../quiz/quiz.service";
 import {GameRepository} from "../model/game/game.repository";
+import {QuizService} from "../quiz/quiz.service";
 
 @Injectable()
 @WebSocketGateway({

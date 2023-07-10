@@ -19,13 +19,6 @@ export class GameController {
     constructor(private gameService: GameService, private gameRepository: GameRepository) {
     }
 
-    @Get('/')
-    public async listAll() {
-        const games = await this.gameService.listAll();
-
-        return games.map(game => this.map(game));
-    }
-
     @Get('/active')
     public async getActive() {
         const game = await this.gameService.getActiveGame();
@@ -43,7 +36,7 @@ export class GameController {
             throw new ForbiddenException();
         }
 
-        const newGame = await this.gameService.createGame(body.demo, body.scoreType ?? GameScoreType.none);
+        const newGame = await this.gameService.createGame(body.demo, body.scoreType ?? GameScoreType.continuous);
 
         return this.map(newGame);
     }
@@ -62,24 +55,13 @@ export class GameController {
 
     @Patch('/:id/next')
     public async nextQuestion(@Param('id') gameId: number) {
-        const game = await this.gameService.next(gameId);
-
-        return this.map(game);
-    }
-
-    @Patch('/:id/stop')
-    public async stopGame(@Param('id') gameId: number) {
         const game = await this.gameRepository.findById(gameId);
 
         if (!game) {
             throw new NotFoundException();
         }
 
-        if (game.stoppedAt) {
-            throw new ForbiddenException();
-        }
-
-        return this.map(await this.gameService.stop(game));
+        return this.map(await this.gameService.nextQuestion(game));
     }
 
     private map(game: GameModel) {

@@ -3,33 +3,32 @@ import {WebSocketService} from "../websocket/web-socket.service";
 import {GameRepository} from "../model/game/game.repository";
 import {GameModel} from "../model/game/game.model";
 import {GameScoreType} from "../model/game/game-score.type";
-import {QuizService} from "../quiz/quiz.service";
-import {GameMessageService} from "./game-message.service";
 import {QuizRepository} from "../model/quiz/quiz.repository";
 import {QuestionRepository} from "../model/question/question.repository";
 import {UserRepository} from "../model/user/user.repository";
 import * as moment from "moment-timezone";
+import {GameMessageModel} from "../model/game/game-message.model";
+import {GameMessageRepository} from "../model/game/game-message.repository";
+import {ParameterRepository} from "../model/parameter/parameter.repository";
+import {QuizService} from "../quiz/quiz.service";
+import {GameModule} from "../model/game/game.module";
 
 @Injectable()
 export class GameService {
     private readonly logger = new Logger(GameService.name);
 
     constructor(private gameRepository: GameRepository,
-                private quizService: QuizService,
-                private gameMessageService: GameMessageService,
+                private parameterRepository: ParameterRepository,
+                private gameMessageRepository: GameMessageRepository,
                 private quizRepository: QuizRepository,
                 private userRepository: UserRepository,
                 private questionRepository: QuestionRepository,
+                private quizService: QuizService,
                 private webSocketService: WebSocketService) {
     }
 
-
-    public async listAll() {
-        return await this.gameRepository.findAll();
-    }
-
-    public async getActiveGame() {
-        return await this.gameRepository.findLastActive();
+    public getActiveGame() {
+        return this.gameRepository.findLastActive();
     }
 
     public async createGame(demo: boolean, scoreType: GameScoreType) {
@@ -42,8 +41,6 @@ export class GameService {
 
         const questions = await this.questionRepository.findByDemo(demo);
 
-        this.webSocketService.clearUserMessages();
-
         return new GameModel({
             demo,
             scoreType,
@@ -51,13 +48,7 @@ export class GameService {
         }).save();
     }
 
-    public async next(gameId) {
-        const game = await this.gameRepository.findById(gameId);
-
-        if (!game) {
-            throw new NotFoundException();
-        }
-
+    public async nextQuestion(game: GameModel) {
         if (game.stoppedAt) {
             throw new ForbiddenException();
         }
@@ -81,18 +72,7 @@ export class GameService {
         return await game.save();
     }
 
-    public async stop(game: GameModel) {
-        await this.sendStoppedMessage(game);
-
-        game.stoppedAt = new Date();
-        return await game.save();
-    }
-
     public async getStanding(game: GameModel) {
-        await this.sendStoppedMessage(game);
-    }
-
-    private async sendStoppedMessage(game: GameModel) {
         const teamScore = await this.quizRepository.sumScoreGroupByTeam(game.id);
         const topUsers = await this.quizRepository.sumScoreGroupByUser(game.id);
 
@@ -116,11 +96,16 @@ export class GameService {
                 event: 'quiz-user-paused',
                 data: {
                     standing: ranking ? ranking['rank'] : null,
-                    score: userScore
+                    score: userScore ?? 0
                 },
             });
         }
 
+        await new GameMessageModel({
+            gameId: game.id,
+            eventType: 'quiz-user-paused',
+            eventData: {}
+        }).save();
     }
 
     private findNextQuestion(game: GameModel): number | undefined {

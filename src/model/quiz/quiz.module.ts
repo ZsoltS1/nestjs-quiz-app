@@ -5,7 +5,7 @@ import {quizProviders} from "./quiz.providers";
 
 @Module({
     imports: [DatabaseModule],
-    providers: [QuizRepository, ...quizProviders],
+    providers: [QuizRepository,...quizProviders],
     exports: [QuizRepository]
 })
 export class QuizModule {

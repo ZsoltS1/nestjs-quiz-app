@@ -26,7 +26,7 @@ export class GameRepository {
                         [Op.eq]: null,
                     },
                 },
-                order: ['startedAt'],
+                order: [['startedAt', 'DESC']],
                 limit: 1
             })
     }

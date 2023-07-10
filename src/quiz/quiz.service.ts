@@ -114,7 +114,7 @@ export class QuizService {
                     gameId: game.id,
                     questionId: question.id,
                     answer: question.answer.options,
-                    score: userScore
+                    score: userScore ?? 0
                 }
             });
         }

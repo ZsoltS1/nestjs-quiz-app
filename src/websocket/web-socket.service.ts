@@ -3,14 +3,19 @@ import {WebSocketClient} from './web-socket-client.interface';
 import * as ws from 'ws';
 import {UserRepository} from "../model/user/user.repository";
 import {UserModel} from "../model/user/user.model";
+import {GameRepository} from "../model/game/game.repository";
+import {QuizRepository} from "../model/quiz/quiz.repository";
+import {GameMessageRepository} from "../model/game/game-message.repository";
 
 @Injectable()
 export class WebSocketService {
     private clients = new Map<number, Set<ws.WebSocket>>();
     private adminClients = new Set<ws.WebSocket>();
-    private userMessages = new Map<number, { event: string; data?: any }>();
 
-    constructor(private userRepository: UserRepository) {
+    constructor(private userRepository: UserRepository,
+                private gameRepository: GameRepository,
+                private quizRepository: QuizRepository,
+                private gameMessageRepository: GameMessageRepository,) {
     }
 
     public async addAdmin(client: WebSocketClient) {
@@ -34,8 +39,6 @@ export class WebSocketService {
 
         user.connected = true;
         await user.save();
-
-        this.sendLastMessages(user);
     }
 
     public async removeAdminClient(adminClient: WebSocketClient) {
@@ -79,19 +82,40 @@ export class WebSocketService {
 
         for (const client of this.clients.get(userId)?.values() ?? []) {
             client.send(message);
-            this.userMessages.set(userId, data);
         }
     }
 
-    private sendLastMessages(user: UserModel) {
-        const lastMessage = this.userMessages.get(user.id);
+    public async sendLastMessage(user: UserModel) {
+        const game = await this.gameRepository.findLastActive();
+        const gameLastMessage = await this.gameMessageRepository.findLastByGame(game.id);
 
-        if (lastMessage) {
-            this.sendToUser(user.id, lastMessage);
+        if (!gameLastMessage) {
+            return;
         }
-    }
 
-    public clearUserMessages() {
-        this.userMessages.clear();
+        if (gameLastMessage.eventType === 'quiz-user-paused') {
+            const userScore = await this.quizRepository.sumScoreByUserAndGame(user.id, game.id);
+            const userRanking = await this.quizRepository.rankingGroupByUser(game.id);
+
+            const ranking = userRanking.find(ranking => ranking['userid'] === user.id)
+
+            this.sendToUser(user.id, {
+                event: gameLastMessage.eventType,
+                data: {
+                    standing: ranking ? ranking['rank'] : null,
+                    score: userScore ?? 0
+                },
+            });
+        } else if (gameLastMessage.eventType === 'quiz-user-message') {
+            const userScore = await this.quizRepository.sumScoreByUserAndGame(user.id, game.id);
+
+            this.sendToUser(user.id, {
+                event: gameLastMessage.eventType,
+                data: {
+                    ...gameLastMessage.eventData,
+                    score: userScore ?? 0
+                }
+            });
+        }
     }
 }
