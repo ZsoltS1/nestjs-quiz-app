@@ -28,7 +28,9 @@ export class UserModel extends Model {
     @BelongsTo(() => TeamModel, 'team_id')
     public team: Promise<TeamModel>;
     @Column
-    public registered: boolean;
+    public connected: boolean;
+    @Column({field: 'logged_in'})
+    public loggedIn: boolean;
     @Column
     public admin: boolean;
     @CreatedAt

@@ -1,4 +1,4 @@
-import {Injectable, NotFoundException} from "@nestjs/common";
+import {BadRequestException, Injectable, NotFoundException} from "@nestjs/common";
 import {UserRepository} from "../model/user/user.repository";
 import {UserModel} from "../model/user/user.model";
 import {JwtService} from "@nestjs/jwt";
@@ -23,7 +23,12 @@ export class LoginService {
             throw new NotFoundException();
         }
 
+        if (user.loggedIn) {
+            throw new BadRequestException('UserAlreadyLoggedIn');
+        }
+
         user.teamId = team.id;
+        user.loggedIn = true;
         await user.save();
 
         return user;
