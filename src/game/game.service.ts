@@ -1,4 +1,4 @@
-import {ForbiddenException, Injectable, Logger, NotFoundException} from "@nestjs/common";
+import {ForbiddenException, Injectable, Logger} from "@nestjs/common";
 import {WebSocketService} from "../websocket/web-socket.service";
 import {GameRepository} from "../model/game/game.repository";
 import {GameModel} from "../model/game/game.model";
@@ -11,7 +11,7 @@ import {GameMessageModel} from "../model/game/game-message.model";
 import {GameMessageRepository} from "../model/game/game-message.repository";
 import {ParameterRepository} from "../model/parameter/parameter.repository";
 import {QuizService} from "../quiz/quiz.service";
-import {GameModule} from "../model/game/game.module";
+import {ParameterType} from "../model/parameter/parameter.type";
 
 @Injectable()
 export class GameService {
@@ -49,6 +49,7 @@ export class GameService {
     }
 
     public async nextQuestion(game: GameModel) {
+
         if (game.stoppedAt) {
             throw new ForbiddenException();
         }
@@ -57,9 +58,10 @@ export class GameService {
             game.startedAt = new Date();
         }
 
+        const threshold = +(await this.parameterRepository.findValueByType(ParameterType.QUESTION_TIMER_IN_SEC));
         const units = moment().diff(moment(game.sentAt), 'seconds');
 
-        if (units < 60) {
+        if (units < threshold) {
             return game;
         }
 
