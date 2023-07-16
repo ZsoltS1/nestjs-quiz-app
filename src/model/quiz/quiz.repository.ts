@@ -14,6 +14,10 @@ export class QuizRepository {
         return this.quizRepository.findAll();
     }
 
+    public findAllByGameAndQuestion(gameId: number, questionId: number): Promise<Array<QuizModel>> {
+        return this.quizRepository.findAll({where: {gameId, questionId}});
+    }
+
     public findByUserAndQuestionAndGame(userId: number, questionId: number, gameId: number) {
         return this.quizRepository.findOne({where: {userId, questionId, gameId}});
     }

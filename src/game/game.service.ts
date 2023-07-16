@@ -49,7 +49,6 @@ export class GameService {
     }
 
     public async nextQuestion(game: GameModel) {
-
         if (game.stoppedAt) {
             throw new ForbiddenException();
         }
@@ -65,6 +64,8 @@ export class GameService {
             return game;
         }
 
+        await this.quizService.evaluateQuestion(game);
+
         const nextQuestionId = this.findNextQuestion(game);
 
         if (nextQuestionId) {
@@ -75,6 +76,8 @@ export class GameService {
     }
 
     public async getStanding(game: GameModel) {
+        await this.quizService.evaluateQuestion(game);
+
         const teamScore = await this.quizRepository.sumScoreGroupByTeam(game.id);
         const topUsers = await this.quizRepository.sumScoreGroupByUser(game.id);
 

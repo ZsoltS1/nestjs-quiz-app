@@ -78,6 +78,14 @@ export class QuizService {
         await game.save();
     }
 
+    public async evaluateQuestion(game: GameModel) {
+        const quizzes = await this.quizRepository.findAllByGameAndQuestion(game.id, game.sentQuestionId);
+
+        for (const quiz of quizzes) {
+            await this.evaluate(quiz);
+        }
+    }
+
     public async evaluate(quiz: QuizModel) {
         const hintTimerConfig = await this.parameterRepository.findValueByType(ParameterType.QUESTION_HINT_TIMER);
         const question = await this.questionRepository.findById(quiz.questionId);

@@ -53,9 +53,5 @@ export class GameMessageService {
         quiz.answer = data.answer;
         quiz.answeredAt = new Date();
         await quiz.save();
-
-        if (!game.demo) {
-            await this.quizService.evaluate(quiz);
-        }
     }
 }
