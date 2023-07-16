@@ -11,7 +11,7 @@ export class UserRepository {
     }
 
     public findAllByAdmin(admin: boolean): Promise<Array<UserModel>> {
-        return this.userRepository.findAll({where: { admin }});
+        return this.userRepository.findAll({where: { admin }, order: [['fullname', 'ASC']]});
     }
 
     public findById(userId: number): Promise<UserModel> {
